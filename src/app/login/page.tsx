@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -13,18 +14,15 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen flex justify-center items-center">
+    <main className="min-h-screen flex justify-center items-center bg-background text-foreground">
       <div className="space-y-4">
         <h1 className="text-3xl font-bold">
           Login
         </h1>
 
-        <button
-          onClick={login}
-          className="px-4 py-2 bg-black text-white rounded"
-        >
+        <Button onClick={login}>
           Mock Login
-        </button>
+        </Button>
       </div>
     </main>
   );

@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useApplicationStore } from "@/store/use-application-store";
-import { STATUS_LABELS } from "@/types";
-import type { ApplicationStatus } from "@/types";
 import StatusBadge from "@/components/status-badge";
 import ApplicationForm from "@/components/application-form";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface ApplicationDetailProps {
   id: string;
@@ -18,19 +18,28 @@ export default function ApplicationDetail({ id }: ApplicationDetailProps) {
   const { getApplicationById, deleteApplication } = useApplicationStore();
   const [showEdit, setShowEdit] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const app = getApplicationById(id);
 
   if (!app) {
     return (
       <div className="text-center py-16">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Application Not Found</h1>
-        <p className="text-gray-500 mb-4">This application may have been deleted.</p>
-        <Link href="/dashboard/applications" className="text-indigo-600 hover:underline text-sm">
+        <h1 className="text-2xl font-bold mb-2">Application Not Found</h1>
+        <p className="text-muted-foreground mb-4">This application may have been deleted.</p>
+        <Link href="/dashboard/applications" className={buttonVariants({ variant: "link" })}>
           ← Back to Applications
         </Link>
       </div>
     );
+  }
+
+  if (!isMounted) {
+    return null;
   }
 
   const handleDelete = () => {
@@ -49,64 +58,62 @@ export default function ApplicationDetail({ id }: ApplicationDetailProps) {
 
   return (
     <div>
-      <Link href="/dashboard/applications" className="text-sm text-gray-500 hover:text-indigo-600 transition-colors mb-4 inline-block">
+      <Link href="/dashboard/applications" className={buttonVariants({ variant: "link", className: "px-0 mb-4" })}>
         ← Back to Applications
       </Link>
 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">{app.company}</h1>
-          <p className="text-gray-500 mt-1">{app.role}</p>
+          <h1 className="text-3xl font-bold">{app.company}</h1>
+          <p className="text-muted-foreground mt-1">{app.role}</p>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => setShowEdit(true)}
-            className="px-4 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors">
+          <Button variant="outline" onClick={() => setShowEdit(true)}>
             Edit
-          </button>
+          </Button>
           {showDeleteConfirm ? (
             <div className="flex gap-2">
-              <button onClick={handleDelete}
-                className="px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors">
+              <Button variant="destructive" onClick={handleDelete}>
                 Confirm Delete
-              </button>
-              <button onClick={() => setShowDeleteConfirm(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+              </Button>
+              <Button variant="secondary" onClick={() => setShowDeleteConfirm(false)}>
                 Cancel
-              </button>
+              </Button>
             </div>
           ) : (
-            <button onClick={() => setShowDeleteConfirm(true)}
-              className="px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors">
+            <Button variant="ghost" className="text-destructive hover:text-destructive" onClick={() => setShowDeleteConfirm(true)}>
               Delete
-            </button>
+            </Button>
           )}
         </div>
       </div>
 
-      <div className="border border-gray-200 rounded-xl bg-white shadow-sm p-6 space-y-5">
-        {infoItems.map((item) => (
-          <div key={item.label} className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
-            <span className="text-sm font-medium text-gray-500 sm:w-32 shrink-0">{item.label}</span>
-            {item.badge ? (
-              <StatusBadge status={app.status} />
-            ) : item.isLink && item.value ? (
-              <a href={item.value} target="_blank" rel="noopener noreferrer"
-                className="text-sm text-indigo-600 hover:underline break-all">
-                {item.value}
-              </a>
-            ) : (
-              <span className="text-sm text-gray-900">{item.value ?? "—"}</span>
-            )}
-          </div>
-        ))}
+      <Card>
+        <CardContent className="p-6 space-y-5">
+          {infoItems.map((item) => (
+            <div key={item.label} className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
+              <span className="text-sm font-medium text-muted-foreground sm:w-32 shrink-0">{item.label}</span>
+              {item.badge ? (
+                <StatusBadge status={app.status} />
+              ) : item.isLink && item.value ? (
+                <a href={item.value} target="_blank" rel="noopener noreferrer"
+                  className="text-sm text-primary hover:underline break-all">
+                  {item.value}
+                </a>
+              ) : (
+                <span className="text-sm">{item.value ?? "—"}</span>
+              )}
+            </div>
+          ))}
 
-        {app.notes && (
-          <div className="pt-4 border-t">
-            <span className="text-sm font-medium text-gray-500 block mb-2">Notes</span>
-            <p className="text-sm text-gray-700 whitespace-pre-wrap bg-gray-50 rounded-lg p-4">{app.notes}</p>
-          </div>
-        )}
-      </div>
+          {app.notes && (
+            <div className="pt-4 border-t border-border">
+              <span className="text-sm font-medium text-muted-foreground block mb-2">Notes</span>
+              <p className="text-sm whitespace-pre-wrap bg-muted rounded-lg p-4">{app.notes}</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {showEdit && (
         <ApplicationForm onClose={() => setShowEdit(false)} editId={id} />

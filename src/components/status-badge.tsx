@@ -2,6 +2,7 @@
 
 import { STATUS_LABELS, STATUS_COLORS } from "@/types";
 import type { ApplicationStatus } from "@/types";
+import { Badge } from "@/components/ui/badge";
 
 interface StatusBadgeProps {
   status: ApplicationStatus;
@@ -11,12 +12,13 @@ export default function StatusBadge({ status }: StatusBadgeProps) {
   const color = STATUS_COLORS[status];
 
   return (
-    <span
-      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
+    <Badge
+      variant="outline"
+      className="gap-1.5 font-semibold"
       style={{
         color,
         backgroundColor: `${color}15`,
-        border: `1px solid ${color}30`,
+        borderColor: `${color}30`,
       }}
     >
       <span
@@ -24,6 +26,6 @@ export default function StatusBadge({ status }: StatusBadgeProps) {
         style={{ backgroundColor: color }}
       />
       {STATUS_LABELS[status]}
-    </span>
+    </Badge>
   );
 }

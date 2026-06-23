@@ -1,12 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useApplicationStore } from "@/store/use-application-store";
 import { STATUS_LABELS } from "@/types";
 import type { ApplicationStatus } from "@/types";
 import StatusBadge from "@/components/status-badge";
 import ApplicationForm from "@/components/application-form";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 const ALL_STATUSES: (ApplicationStatus | "all")[] = [
   "all",
@@ -32,6 +43,11 @@ export default function ApplicationList() {
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | undefined>();
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const filtered = getFilteredApplications();
   const counts = getStatusCounts();
@@ -46,40 +62,43 @@ export default function ApplicationList() {
     setDeleteConfirm(null);
   };
 
+  if (!isMounted) {
+    return null;
+  }
+
   return (
     <div>
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Applications</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-3xl font-bold">Applications</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             {filtered.length} application{filtered.length !== 1 ? "s" : ""} found
           </p>
         </div>
-        <button
+        <Button
           onClick={() => {
             setEditId(undefined);
             setShowForm(true);
           }}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
+          className="gap-2"
         >
-          <span className="text-lg leading-none">+</span>
-          Add Application
-        </button>
+          <span className="text-lg leading-none">+</span> Add Application
+        </Button>
       </div>
 
-      {/* Search + Filter Bar */}
+      {/* Search */}
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
-        <div className="relative flex-1">
-          <input
+        <div className="relative flex-1 max-w-sm">
+          <Input
             type="text"
             placeholder="Search by company, role, or location..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full border border-gray-300 rounded-lg pl-10 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
+            className="pl-10"
           />
           <svg
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -100,107 +119,110 @@ export default function ApplicationList() {
           const isActive = filterStatus === s;
           const count = counts[s] ?? 0;
           return (
-            <button
+            <Button
               key={s}
+              variant={isActive ? "default" : "secondary"}
+              size="sm"
               onClick={() => setFilterStatus(s)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                isActive
-                  ? "bg-indigo-600 text-white shadow-sm"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
+              className="text-xs"
             >
               {s === "all" ? "All" : STATUS_LABELS[s]} ({count})
-            </button>
+            </Button>
           );
         })}
       </div>
 
       {/* Applications Table */}
       {filtered.length === 0 ? (
-        <div className="text-center py-16 border border-dashed border-gray-300 rounded-xl">
-          <p className="text-gray-400 text-lg mb-1">No applications found</p>
-          <p className="text-gray-400 text-sm">
+        <div className="text-center py-16 border border-dashed border-border rounded-xl">
+          <p className="text-muted-foreground text-lg mb-1">No applications found</p>
+          <p className="text-muted-foreground text-sm">
             Try adjusting your search or filter, or add a new application.
           </p>
         </div>
       ) : (
-        <div className="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                <th className="px-5 py-3">Company</th>
-                <th className="px-5 py-3">Role</th>
-                <th className="px-5 py-3">Status</th>
-                <th className="px-5 py-3">Date Applied</th>
-                <th className="px-5 py-3">Location</th>
-                <th className="px-5 py-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
+        <div className="border border-border rounded-md">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Company</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Date Applied</TableHead>
+                <TableHead>Location</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {filtered.map((app) => (
-                <tr
-                  key={app.id}
-                  className="hover:bg-gray-50/60 transition-colors"
-                >
-                  <td className="px-5 py-4">
+                <TableRow key={app.id}>
+                  <TableCell className="font-medium">
                     <Link
                       href={`/dashboard/applications/${app.id}`}
-                      className="font-semibold text-gray-900 hover:text-indigo-600 transition-colors"
+                      className="hover:text-primary transition-colors"
                     >
                       {app.company}
                     </Link>
-                  </td>
-                  <td className="px-5 py-4 text-gray-600">{app.role}</td>
-                  <td className="px-5 py-4">
+                  </TableCell>
+                  <TableCell>{app.role}</TableCell>
+                  <TableCell>
                     <StatusBadge status={app.status} />
-                  </td>
-                  <td className="px-5 py-4 text-gray-500">
+                  </TableCell>
+                  <TableCell>
                     {new Date(app.dateApplied).toLocaleDateString("en-US", {
                       month: "short",
                       day: "numeric",
                       year: "numeric",
                     })}
-                  </td>
-                  <td className="px-5 py-4 text-gray-500">
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
                     {app.location ?? "—"}
-                  </td>
-                  <td className="px-5 py-4 text-right">
+                  </TableCell>
+                  <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <button
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 px-2 lg:px-3"
                         onClick={() => handleEdit(app.id)}
-                        className="px-2.5 py-1 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-md hover:bg-indigo-100 transition-colors"
                       >
                         Edit
-                      </button>
+                      </Button>
                       {deleteConfirm === app.id ? (
                         <div className="flex gap-1">
-                          <button
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            className="h-8 px-2 lg:px-3"
                             onClick={() => handleDelete(app.id)}
-                            className="px-2.5 py-1 text-xs font-medium text-white bg-red-500 rounded-md hover:bg-red-600 transition-colors"
                           >
                             Confirm
-                          </button>
-                          <button
+                          </Button>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="h-8 px-2 lg:px-3"
                             onClick={() => setDeleteConfirm(null)}
-                            className="px-2.5 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
                           >
                             Cancel
-                          </button>
+                          </Button>
                         </div>
                       ) : (
-                        <button
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 px-2 lg:px-3 text-destructive hover:text-destructive"
                           onClick={() => setDeleteConfirm(app.id)}
-                          className="px-2.5 py-1 text-xs font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100 transition-colors"
                         >
                           Delete
-                        </button>
+                        </Button>
                       )}
                     </div>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       )}
 
